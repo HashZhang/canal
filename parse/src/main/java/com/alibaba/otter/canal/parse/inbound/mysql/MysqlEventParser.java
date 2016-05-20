@@ -28,7 +28,6 @@ import com.alibaba.otter.canal.parse.inbound.mysql.dbsync.LogEventConvert;
 import com.alibaba.otter.canal.parse.inbound.mysql.dbsync.TableMetaCache;
 import com.alibaba.otter.canal.parse.support.AuthenticationInfo;
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.alibaba.otter.canal.protocol.CanalEntry.Entry;
 import com.alibaba.otter.canal.protocol.position.EntryPosition;
 import com.alibaba.otter.canal.protocol.position.LogPosition;
 import com.taobao.tddl.dbsync.binlog.LogEvent;
@@ -323,6 +322,12 @@ public class MysqlEventParser extends AbstractMysqlEventParser implements CanalE
         }
         return startPosition;
     }
+    
+	protected EntryPosition findEndPosition(ErosaConnection connection) throws IOException {
+		MysqlConnection mysqlConnection = (MysqlConnection) connection;
+		 EntryPosition endPosition = findEndPosition(mysqlConnection);
+		return endPosition;
+	}
 
     protected EntryPosition findStartPositionInternal(ErosaConnection connection) {
         MysqlConnection mysqlConnection = (MysqlConnection) connection;
@@ -698,23 +703,6 @@ public class MysqlEventParser extends AbstractMysqlEventParser implements CanalE
         } else {
             return null;
         }
-    }
-
-    protected Entry parseAndProfilingIfNecessary(LogEvent bod) throws Exception {
-        long startTs = -1;
-        boolean enabled = getProfilingEnabled();
-        if (enabled) {
-            startTs = System.currentTimeMillis();
-        }
-        CanalEntry.Entry event = binlogParser.parse(bod);
-        if (enabled) {
-            this.parsingInterval = System.currentTimeMillis() - startTs;
-        }
-
-        if (parsedEventCount.incrementAndGet() < 0) {
-            parsedEventCount.set(0);
-        }
-        return event;
     }
 
     public void setSupportBinlogFormats(String formatStrs) {
